@@ -964,7 +964,19 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
   //std::cerr << std::endl;
   for (i = 0, j = 0; i < str_vector.size() && j < test_vector.size();) {
     if (str_vector[i]->getSymbol()->getTokenIndex() < brace_vector[j]->getSymbol()->getTokenIndex()) {
-      str.push_back(str_vector[i]->toString());
+      auto data = str_vector[i]->toString();
+      auto pos = data.find("{{");
+      while (pos != std::string::npos) {
+        //std::cerr << pos << std::endl;
+        data.replace(pos, 2, "{");
+        pos = data.find("{{");
+      }
+      pos = data.find("}}");
+      while (pos != std::string::npos) {
+        data.replace(pos, 2, "}");
+        pos = data.find("}}");
+      }
+      str.push_back(data);
       //std::cerr << i << " " << str_vector[i]->toString() << std::endl;
       i++;
     } else {
@@ -985,8 +997,20 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
       j++;
     }
   }
-  for (;i < str_vector.size(); i++) {
-    str.push_back(str_vector[i]->toString());
+  for (; i < str_vector.size(); i++) {
+    auto data = str_vector[i]->toString();
+    auto pos = data.find("{{");
+    while (pos != std::string::npos) {
+      //std::cerr << pos << std::endl;
+      data.replace(pos, 2, "{");
+      pos = data.find("{{");
+    }
+    pos = data.find("}}");
+    while (pos != std::string::npos) {
+      data.replace(pos, 2, "}");
+      pos = data.find("}}");
+    }
+    str.push_back(data);
   }
   for (; j < test_vector.size(); j++) {
     auto ret = visit(test_vector[j]);
