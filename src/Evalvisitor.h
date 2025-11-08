@@ -45,24 +45,14 @@ struct Control {
   std::vector<std::any> value_;
 };
 
-std::any Operation(std::any &, std::any &, OperationType);
-
 class EvalVisitor : public Python3ParserBaseVisitor {
 	// TODO: override all methods of Python3ParserBaseVisitor
 private:
   std::vector<std::map<std::string, std::any>> variables_stack_;
   std::map<std::string, Callable> functions_;
   std::map<std::string, Function> user_functions_;
-  std::any GetValue(std::any &data) {
-    if(auto name = std::any_cast<std::string>(&data)) {
-      for(auto it = variables_stack_.rbegin(); it != variables_stack_.rend(); it++) {
-        if(it->count(*name)) {
-          return (*it)[*name];
-        }
-      }
-    }
-    return data;
-  }
+  std::any GetValue(std::any &);
+  std::any Operation(std::any &, std::any& , OperationType);
 public:
   EvalVisitor();
   std::any visitFile_input(Python3Parser::File_inputContext *);

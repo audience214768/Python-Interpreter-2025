@@ -6,6 +6,6 @@ gen/
 antlr-playground/.antlr
 resources/.antlr
 # Testcases
-testcases/hidden-testcases
+testcases/
 2921
 2921.zip

@@ -46,6 +46,9 @@ EvalVisitor::EvalVisitor() {
     }
     auto data = arglist[0].value_;
     sjtu::int2048 int_num;
+    if(auto num = std::any_cast<sjtu::int2048>(&data)) {
+      int_num = *num;
+    }
     if(auto num = std::any_cast<double>(&data)) {
       //std::cerr << *num << std::endl;
       int_num = *num;
@@ -70,6 +73,9 @@ EvalVisitor::EvalVisitor() {
       exit(1);
     }
     auto data = arglist[0].value_;
+    if(auto num = std::any_cast<double>(&data)) {
+      double_num = *num;
+    }
     if(auto num = std::any_cast<sjtu::int2048>(&data)) {
       double_num = num->ToDouble();
     }
@@ -108,6 +114,9 @@ EvalVisitor::EvalVisitor() {
     }
     auto data = arglist[0].value_;
     std::vector<std::string> str;
+    if(auto str1 = std::any_cast<std::vector<std::string>>(&data)) {
+      str = *str1;
+    }
     if(auto num = std::any_cast<sjtu::int2048>(&data))  {
       //std::cerr << *num << std::endl;
       str.push_back(num->ToString());
@@ -127,6 +136,9 @@ EvalVisitor::EvalVisitor() {
       exit(1);
     }
     auto data = arglist[0].value_;
+    if(auto flag1 = std::any_cast<bool>(&data)) {
+      flag = *flag1;
+    }
     if(auto num = std::any_cast<sjtu::int2048>(&data)) {
       flag = num->ToBool();
     }
@@ -156,7 +168,37 @@ EvalVisitor::EvalVisitor() {
   functions_["string"] = to_string;
   functions_["bool"] = to_bool;
 }
-std::any Operation(std::any &data1, std::any &data2, OperationType type) {
+
+std::any EvalVisitor::GetValue(std::any &data) {
+  if (auto name = std::any_cast<std::string>(&data)) {
+    for (auto it = variables_stack_.rbegin(); it != variables_stack_.rend();
+         it++) {
+      if (it->count(*name)) {
+        return (*it)[*name];
+      }
+    }
+  }
+  return data;
+}
+
+std::any EvalVisitor::Operation(std::any &data1, std::any &data2, OperationType type) {
+  if(type == kDiv) {
+    std::vector<Arg> arglist;
+    arglist.push_back(Arg(data1));
+    data1 = functions_["double"](arglist);
+    arglist[0] = Arg(data2);
+    data2 = functions_["double"](arglist);
+  }
+  if(data2.type() == typeid(double)) {
+    std::vector<Arg> arglist;
+    arglist.push_back(Arg(data1));
+    data1 = functions_["double"](arglist);
+  }
+  if(data1.type() == typeid(double)) {
+     std::vector<Arg> arglist;
+    arglist.push_back(Arg(data2));
+    data2 = functions_["double"](arglist);
+  }
   if (auto num1 = std::any_cast<sjtu::int2048>(&data1), num2 = std::any_cast<sjtu::int2048>(&data2); num1 && num2) {
     //std::cerr << *num1 << " " << *num2 << " " << type << std::endl;
     switch (type) {
@@ -561,6 +603,10 @@ std::any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx) {
   if (test_vector.size() == 1) {
     return ret;
   } else {
+    ret = GetValue(ret);
+    std::vector<Arg> arglist;
+    arglist.push_back(Arg(ret));
+    ret = functions_["bool"](arglist);
     auto flag = std::any_cast<bool>(&ret);
     if (!flag) {
        std::cerr << "or : argument should be bool\n";
@@ -568,6 +614,10 @@ std::any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx) {
     } else {
       for (int i = 1; i < test_vector.size() && (*flag) != 1; i++) {
         auto ret1 = visit(test_vector[i]);
+        ret1 = GetValue(ret1);
+        std::vector<Arg> arglist;
+        arglist.push_back(Arg(ret1));
+        ret1 = functions_["bool"](arglist);
         auto flag1 = std::any_cast<bool>(&ret1);
         if (!flag1) {
           std::cerr << "or : argument should be bool\n";
@@ -586,6 +636,10 @@ std::any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx) {
   if (test_vector.size() == 1) {
     return ret;
   } else {
+    ret = GetValue(ret);
+    std::vector<Arg> arglist;
+    arglist.push_back(Arg(ret));
+    ret = functions_["bool"](arglist);
     auto flag = std::any_cast<bool>(&ret);
     if (!flag) {
       std::cerr << "and : argument should be bool\n";
@@ -593,6 +647,10 @@ std::any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx) {
     } else {
       for (int i = 1; i < test_vector.size() && flag != 0; i++) {
         auto ret1 = visit(test_vector[i]);
+        ret1 = GetValue(ret1);
+        std::vector<Arg> arglist;
+        arglist.push_back(Arg(ret1));
+        ret1 = functions_["bool"](arglist);
         auto flag1 = std::any_cast<bool>(&ret1);
         if (!flag1) {
           std::cerr << "and : argument should be bool\n";
@@ -609,6 +667,9 @@ std::any EvalVisitor::visitNot_test(Python3Parser::Not_testContext *ctx) {
   if (ctx->not_test()) {
     auto ret = visit(ctx->not_test());
     ret = GetValue(ret);
+    std::vector<Arg> arglist;
+    arglist.push_back(Arg(ret));
+    ret = functions_["bool"](arglist);
     auto flag = std::any_cast<bool>(&ret);
     if (flag) {
       return std::any(!(*flag));
@@ -940,11 +1001,9 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
       if (auto testlist = std::any_cast<std::vector<std::any>>(&ret)) {
         //std::cerr << j << std::endl;
         for (auto test : *testlist) {
-          if (test.type() != typeid(std::vector<std::string>)) {
-            std::vector<Arg> arglist;
-            arglist.push_back(Arg(test));
-            test = functions_["string"](arglist);
-          }
+          std::vector<Arg> arglist;
+          arglist.push_back(Arg(test));
+          test = functions_["string"](arglist);
           auto str_vector1 = std::any_cast<std::vector<std::string>>(test);
           for (auto data : str_vector1) {
             //std::cerr << j << " " << data << std::endl;
@@ -963,11 +1022,9 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
     if (auto testlist = std::any_cast<std::vector<std::any>>(&ret)) {
       // std::cerr << j << std::endl;
       for (auto test : *testlist) {
-        if (test.type() != typeid(std::vector<std::string>)) {
-          std::vector<Arg> arglist;
-          arglist.push_back(Arg(test));
-          test = functions_["string"](arglist);
-        }
+        std::vector<Arg> arglist;
+        arglist.push_back(Arg(test));
+        test = functions_["string"](arglist);
         auto str_vector1 = std::any_cast<std::vector<std::string>>(test);
         for (auto data : str_vector1) {
           //std::cerr << j << " " << data << std::endl;
