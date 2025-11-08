@@ -1,5 +1,4 @@
-def fun(a) : 
+def fun(a):
     return a, 2 * a
-a, b = fun(1), fun(2)
-print(a, b)
+print(fun(1))
 
