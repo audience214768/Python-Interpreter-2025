@@ -1,2 +1,8 @@
-print(f"this is a {{}}")
+print(1 == 1.2)
+print(False != 0)
+print("abc" != 123)
+print("abc" == True)
+print("abc" * 3)
+print(3 * "abc")
+
 

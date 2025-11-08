@@ -61,8 +61,10 @@ EvalVisitor::EvalVisitor() {
       //std::cerr << str_total << std::endl;
     }
     if(auto flag = std::any_cast<bool>(&data)) {
-      int_num = flag ? 1 : 0;
+      //std::cerr << 1 << std::endl;
+      int_num = (*flag) ? 1 : 0;
     }
+    //std::cerr << int_num << std::endl;
     return std::any(int_num);
   };
   auto to_double = [this](const std::vector<Arg> &arglist) {
@@ -77,24 +79,38 @@ EvalVisitor::EvalVisitor() {
     if(auto num = std::any_cast<sjtu::int2048>(&data)) {
       double_num = num->ToDouble();
     }
+    
     if(auto str = std::any_cast<std::vector<std::string>>(&data)) {
       std::string string_num;
       for(std::string s : *str) {
         string_num += s;
+      }
+      int sign = 1;
+      if(string_num[0] == '-') {
+        sign = -1;
       }
       int index = string_num.find('.');
       if(index == std::string::npos) {
           index = string_num.length();
       }
       //std::cerr << index << std::endl;
-      for(int i = index - 1, base = 1; i >= 0; i--, base *= 10) {
-        double_num += base * (string_num[i] - '0');
+      for(int i = (sign == 1 ? 0 : 1);i < index; i++) {
+        if (string_num[i] >= '0' && string_num[i] <= '9') {
+          double_num = double_num * 10 + (string_num[i] - '0');
+        } else {
+          throw "this is not a number";
+        }
       }
       double base = 0.1;
       for(int i = index + 1; i < string_num.length(); base /= 10, i++) {
-        double_num += base * (string_num[i] - '0');
+        if(string_num[i] >= '0' && string_num[i] <= '9') {
+          double_num += base * (string_num[i] - '0');
+        } else {
+          throw "this is not a number";
+        }
       }
-      //std::cerr << num << std::endl;
+      double_num *= sign;
+      //std::cerr << double_num << std::endl;
     }
     if(auto flag = std::any_cast<bool>(&data)) {
       if(*flag) {
@@ -150,6 +166,7 @@ EvalVisitor::EvalVisitor() {
       for(std::string s : *str) {
         str_total += s;
       }
+      //std::cerr << str_total << std::endl;
       if(str_total == "") {
         flag = 0;
       } else {
@@ -177,7 +194,7 @@ std::any EvalVisitor::GetValue(std::any &data) {
   return data;
 }
 
-std::any EvalVisitor::Operation(std::any &data1, std::any &data2, OperationType type) {
+std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType type) {
   if(type == kDiv) {
     std::vector<Arg> arglist;
     arglist.push_back(Arg(data1));
@@ -191,9 +208,41 @@ std::any EvalVisitor::Operation(std::any &data1, std::any &data2, OperationType 
     data1 = functions_["double"](arglist);
   }
   if(data1.type() == typeid(double)) {
-     std::vector<Arg> arglist;
+    std::vector<Arg> arglist;
     arglist.push_back(Arg(data2));
     data2 = functions_["double"](arglist);
+  }
+  if(data1.type() != typeid(std::vector<std::string>) && data2.type() == typeid(std::vector<std::string>)) {
+    //std::cerr << 1 << std::endl;
+    std::swap(data1, data2);
+  }
+  if(type == kEqual || type == kNot_Equal) {
+    if(data1.type() == typeid(std::vector<std::string>)) {
+      std::vector<Arg> arglist;
+      arglist.push_back(Arg(data1));
+      if(data2.type() == typeid(sjtu::int2048)) {
+        try{
+          data1 = functions_["int"](arglist);
+        } catch(const char *err) {
+          return false;
+        }
+      }
+      if(data2.type() == typeid(bool)) {
+        //std::cerr << 1 << std::endl;
+        data1 = functions_["bool"](arglist);
+      }
+    }
+  }
+  if(data1.type() == typeid(bool)) {
+    std::vector<Arg> arglist;
+    arglist.push_back(Arg(data1));
+    data1 = functions_["int"](arglist);
+  }
+  if(data2.type() == typeid(bool)) {
+    //std::cerr << 1 << std::endl;
+    std::vector<Arg> arglist;
+    arglist.push_back(Arg(data2));
+    data2 = functions_["int"](arglist);
   }
   if (auto num1 = std::any_cast<sjtu::int2048>(&data1), num2 = std::any_cast<sjtu::int2048>(&data2); num1 && num2) {
     //std::cerr << *num1 << " " << *num2 << " " << type << std::endl;
@@ -283,14 +332,14 @@ std::any EvalVisitor::Operation(std::any &data1, std::any &data2, OperationType 
     default:
       throw "this operation is invalid\n";
     }
-    
+    return false;
   }
   if (data1.type() == typeid(std::vector<std::string>) &&
       data2.type() == typeid(sjtu::int2048)) {
     auto string = std::any_cast<std::vector<std::string>>(&data1);
     auto num = std::any_cast<sjtu::int2048>(data2);
     std::vector<std::string> data(*string);
-    // std::cerr << num << std::endl;
+    //std::cerr << num << std::endl;
     std::string str1;
     for(auto str : *string) {
       str1 += str;
