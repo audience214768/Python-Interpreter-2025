@@ -235,7 +235,7 @@ std::any EvalVisitor::Operation(std::any &data1, std::any &data2, OperationType 
     case kDiv:
       return (*num1) / (*num2);
     case kIDiv:
-      return int(floor((*num1) / (*num2)));
+      return sjtu::int2048(floor((*num1) / (*num2)));
     case kLess:
       return (*num1) < (*num2);
     case kGreater:
