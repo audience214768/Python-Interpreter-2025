@@ -1,1 +1,5 @@
-print(string(1.0))
+def fun(a) : 
+    return a, 2 * a
+a, b = fun(1), fun(2)
+print(a, b)
+

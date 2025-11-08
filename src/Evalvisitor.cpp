@@ -41,8 +41,7 @@ EvalVisitor::EvalVisitor() {
   };
   auto to_int = [this](const std::vector<Arg> &arglist) {
     if(arglist.size() != 1) {
-      std::cerr << arglist.size() << " only converse 1 element\n";
-      exit(1);
+      throw " only converse 1 element";
     }
     auto data = arglist[0].value_;
     sjtu::int2048 int_num;
@@ -69,8 +68,7 @@ EvalVisitor::EvalVisitor() {
   auto to_double = [this](const std::vector<Arg> &arglist) {
     double double_num = 0;
     if(arglist.size() != 1) {
-      std::cerr << "only converse 1 element\n";
-      exit(1);
+      throw "only converse 1 element";
     }
     auto data = arglist[0].value_;
     if(auto num = std::any_cast<double>(&data)) {
@@ -109,8 +107,7 @@ EvalVisitor::EvalVisitor() {
   };
   auto to_string  = [this](const std::vector<Arg> &arglist) {
     if(arglist.size() != 1) {
-      std::cerr << "only converse 1 element\n";
-      exit(1);
+      throw "only converse 1 element";
     }
     auto data = arglist[0].value_;
     std::vector<std::string> str;
@@ -132,8 +129,7 @@ EvalVisitor::EvalVisitor() {
   auto to_bool = [this](const std::vector<Arg> &arglist) {
     bool flag;
     if(arglist.size() != 1) {
-      std::cerr << "only converse 1 element\n";
-      exit(1);
+      throw "only converse 1 element\n";
     }
     auto data = arglist[0].value_;
     if(auto flag1 = std::any_cast<bool>(&data)) {
@@ -225,8 +221,7 @@ std::any EvalVisitor::Operation(std::any &data1, std::any &data2, OperationType 
     case kNot_Equal:
       return (*num1) != (*num2);
     default:
-      std::cerr << "this operation is invalid\n";
-      exit(1);
+      throw "this operation is invalid";
     }
   }
   if(auto num1 = std::any_cast<double>(&data1), num2 = std::any_cast<double>(&data2); num1 && num2) {
@@ -252,8 +247,7 @@ std::any EvalVisitor::Operation(std::any &data1, std::any &data2, OperationType 
     case kNot_Equal:
       return (*num1) != (*num2);
     default:
-      std::cerr << "this operation is invalid\n";
-      exit(1);
+      throw "this operation is invalid\n";
     }
   }
   if (auto string1 = std::any_cast<std::vector<std::string>>(&data1), string2 = std::any_cast<std::vector<std::string>>(&data2); string1 && string2) {
@@ -285,8 +279,7 @@ std::any EvalVisitor::Operation(std::any &data1, std::any &data2, OperationType 
     case kNot_Equal:
       return str1 != str2;
     default:
-      std::cerr << "this operation is invalid\n";
-      exit(1);
+      throw "this operation is invalid\n";
     }
     
   }
@@ -313,7 +306,16 @@ std::any EvalVisitor::Operation(std::any &data1, std::any &data2, OperationType 
 std::any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx) {
   std::map<std::string, std::any> variables;
   variables_stack_.push_back(variables);
-  return visitChildren(ctx);
+  auto stmt_vector = ctx->stmt();
+  try {
+    for(auto stmt : stmt_vector) {
+      visit(stmt);
+    }
+  } catch (const char *err) {
+    std::cerr << err << std::endl;
+    exit(1);
+  }
+  return std::any();
 }
 
 std::any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx) {
@@ -373,8 +375,7 @@ std::any EvalVisitor::visitStmt(Python3Parser::StmtContext *ctx) {
   if(ctx->compound_stmt()){
     return visit(ctx->compound_stmt());
   }
-  std::cerr << "simple or compound\n";
-  exit(1);
+  throw "simple or compound";
 }
 
 std::any EvalVisitor::visitSimple_stmt(Python3Parser::Simple_stmtContext *ctx) {
@@ -392,8 +393,7 @@ std::any EvalVisitor::visitSmall_stmt(Python3Parser::Small_stmtContext *ctx) {
   if(ctx->flow_stmt()) {
     return visit(ctx->flow_stmt());
   }
-  std::cerr << "small : not expr nor flow\n";
-  exit(1);
+  throw "small : not expr nor flow";
 }
 
 std::any EvalVisitor::visitFlow_stmt(Python3Parser::Flow_stmtContext *ctx) {
@@ -495,8 +495,7 @@ std::any EvalVisitor::visitAugassign(Python3Parser::AugassignContext *ctx) {
   if (ctx->SUB_ASSIGN()) {
     return kMinus;
   }
-  std::cerr << "unknown operation\n";
-  exit(1);
+  throw "unknown operation\n";
 }
 
 std::any EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) {
@@ -608,25 +607,16 @@ std::any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx) {
     arglist.push_back(Arg(ret));
     ret = functions_["bool"](arglist);
     auto flag = std::any_cast<bool>(&ret);
-    if (!flag) {
-       std::cerr << "or : argument should be bool\n";
-       exit(1);
-    } else {
-      for (int i = 1; i < test_vector.size() && (*flag) != 1; i++) {
-        auto ret1 = visit(test_vector[i]);
-        ret1 = GetValue(ret1);
-        std::vector<Arg> arglist;
-        arglist.push_back(Arg(ret1));
-        ret1 = functions_["bool"](arglist);
-        auto flag1 = std::any_cast<bool>(&ret1);
-        if (!flag1) {
-          std::cerr << "or : argument should be bool\n";
-          exit(1);
-        }
-        *flag = (*flag) || (*flag1);
-      }
-      return *flag;
+    for (int i = 1; i < test_vector.size() && (*flag) != 1; i++) {
+      auto ret1 = visit(test_vector[i]);
+      ret1 = GetValue(ret1);
+      std::vector<Arg> arglist;
+      arglist.push_back(Arg(ret1));
+      ret1 = functions_["bool"](arglist);
+      auto flag1 = std::any_cast<bool>(&ret1);
+      *flag = (*flag) || (*flag1);
     }
+    return *flag;
   }
 }
 
@@ -641,25 +631,16 @@ std::any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx) {
     arglist.push_back(Arg(ret));
     ret = functions_["bool"](arglist);
     auto flag = std::any_cast<bool>(&ret);
-    if (!flag) {
-      std::cerr << "and : argument should be bool\n";
-      exit(1);
-    } else {
-      for (int i = 1; i < test_vector.size() && flag != 0; i++) {
-        auto ret1 = visit(test_vector[i]);
-        ret1 = GetValue(ret1);
-        std::vector<Arg> arglist;
-        arglist.push_back(Arg(ret1));
-        ret1 = functions_["bool"](arglist);
-        auto flag1 = std::any_cast<bool>(&ret1);
-        if (!flag1) {
-          std::cerr << "and : argument should be bool\n";
-          exit(1);
-        }
-        *flag = (*flag) && (*flag1);
-      }
-      return *flag;
+    for (int i = 1; i < test_vector.size() && flag != 0; i++) {
+      auto ret1 = visit(test_vector[i]);
+      ret1 = GetValue(ret1);
+      std::vector<Arg> arglist;
+      arglist.push_back(Arg(ret1));
+      ret1 = functions_["bool"](arglist);
+      auto flag1 = std::any_cast<bool>(&ret1);
+      *flag = (*flag) && (*flag1);
     }
+    return *flag;
   }
 }
 
@@ -671,18 +652,12 @@ std::any EvalVisitor::visitNot_test(Python3Parser::Not_testContext *ctx) {
     arglist.push_back(Arg(ret));
     ret = functions_["bool"](arglist);
     auto flag = std::any_cast<bool>(&ret);
-    if (flag) {
-      return std::any(!(*flag));
-    } else {
-      std::cerr << "not : argument error\n";
-      exit(1);
-    }
+    return std::any(!(*flag));
   } else {
     if (ctx->comparison()) {
       return visit(ctx->comparison());
     } else {
-      std::cerr << "not : argument should be not_test or comparison\n";
-      exit(1);
+      throw "not : argument should be not_test or comparison\n";
     }
   }
 }
@@ -733,8 +708,7 @@ std::any EvalVisitor::visitComp_op(Python3Parser::Comp_opContext *ctx) {
   if (ctx->NOT_EQ_2()) {
     return kNot_Equal;
   }
-  std::cerr << "no this comp_op\n";
-  exit(1);
+  throw "no this comp_op";
 }
 
 std::any EvalVisitor::visitArith_expr(Python3Parser::Arith_exprContext *ctx) { // only int2048 +-, wait for float string
@@ -771,8 +745,7 @@ std::any EvalVisitor::visitAddorsub_op(Python3Parser::Addorsub_opContext *ctx) {
     if (ctx->MINUS()) {
       return kMinus;
     } else {
-      std::cerr << "op : should be + or -\n";
-      exit(1);
+      throw "op : should be + or -";
     }
   }
 }
@@ -817,8 +790,7 @@ EvalVisitor::visitMuldivmod_op(Python3Parser::Muldivmod_opContext *ctx) {
   if (ctx->MOD()) {
     return kMod;
   }
-  std::cerr << "op : invalid\n";
-  exit(1);
+  throw "op : invalid";
 }
 
 std::any EvalVisitor::visitFactor(Python3Parser::FactorContext *ctx) {
@@ -832,8 +804,7 @@ std::any EvalVisitor::visitFactor(Python3Parser::FactorContext *ctx) {
       if(auto num = std::any_cast<double>(&ret)) {
         return -(*num);
       }
-      std::cerr << "- before a not num\n";
-      exit(1);
+      throw "- before a not num";
     }
     if(ctx->ADD()) {
       ret = GetValue(ret);
@@ -843,16 +814,14 @@ std::any EvalVisitor::visitFactor(Python3Parser::FactorContext *ctx) {
       if(auto num = std::any_cast<double>(&ret)) {
         return *num;
       }
-      std::cerr << "+ before a not num\n";
-      exit(1);
+      throw "+ before a not num\n";
     }
     return ret;
   }
   if (ctx->atom_expr()) {
     return visit(ctx->atom_expr());
   } 
-  std::cerr << "factor wrong\n";
-  exit(1);
+  throw "factor wrong\n";
 }
 
 std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
