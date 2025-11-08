@@ -24,7 +24,7 @@ compound_stmt: if_stmt | while_stmt | funcdef ;
 if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ('else' ':' suite)?;
 while_stmt: 'while' test ':' suite;
 suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT;
-test: or_test ;
+test: or_test ;//maybe a tuple
 or_test: and_test ('or' and_test)*;
 and_test: not_test ('and' not_test)*;
 not_test: 'not' not_test | comparison;
