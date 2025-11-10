@@ -177,7 +177,7 @@ EvalVisitor::EvalVisitor() {
   };
   functions_["print"] = print;
   functions_["int"] = to_int;
-  functions_["double"] = to_double;
+  functions_["float"] = to_double;
   functions_["str"] = to_string;
   functions_["bool"] = to_bool;
 }
@@ -198,19 +198,19 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
   if (type == kDiv) {
     std::vector<Arg> arglist;
     arglist.push_back(Arg(data1));
-    data1 = functions_["double"](arglist);
+    data1 = functions_["float"](arglist);
     arglist[0] = Arg(data2);
-    data2 = functions_["double"](arglist);
+    data2 = functions_["float"](arglist);
   }
   if (data2.type() == typeid(double)) {
     std::vector<Arg> arglist;
     arglist.push_back(Arg(data1));
-    data1 = functions_["double"](arglist);
+    data1 = functions_["float"](arglist);
   }
   if (data1.type() == typeid(double)) {
     std::vector<Arg> arglist;
     arglist.push_back(Arg(data2));
-    data2 = functions_["double"](arglist);
+    data2 = functions_["float"](arglist);
   }
   if (data1.type() != typeid(std::vector<std::string>) && data2.type() == typeid(std::vector<std::string>)) {
     //std::cerr << 1 << std::endl;
