@@ -178,7 +178,7 @@ EvalVisitor::EvalVisitor() {
   functions_["print"] = print;
   functions_["int"] = to_int;
   functions_["double"] = to_double;
-  functions_["string"] = to_string;
+  functions_["str"] = to_string;
   functions_["bool"] = to_bool;
 }
 
@@ -195,39 +195,39 @@ std::any EvalVisitor::GetValue(std::any &data) {
 }
 
 std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType type) {
-  if(type == kDiv) {
+  if (type == kDiv) {
     std::vector<Arg> arglist;
     arglist.push_back(Arg(data1));
     data1 = functions_["double"](arglist);
     arglist[0] = Arg(data2);
     data2 = functions_["double"](arglist);
   }
-  if(data2.type() == typeid(double)) {
+  if (data2.type() == typeid(double)) {
     std::vector<Arg> arglist;
     arglist.push_back(Arg(data1));
     data1 = functions_["double"](arglist);
   }
-  if(data1.type() == typeid(double)) {
+  if (data1.type() == typeid(double)) {
     std::vector<Arg> arglist;
     arglist.push_back(Arg(data2));
     data2 = functions_["double"](arglist);
   }
-  if(data1.type() != typeid(std::vector<std::string>) && data2.type() == typeid(std::vector<std::string>)) {
+  if (data1.type() != typeid(std::vector<std::string>) && data2.type() == typeid(std::vector<std::string>)) {
     //std::cerr << 1 << std::endl;
     std::swap(data1, data2);
   }
-  if(type == kEqual || type == kNot_Equal) {
-    if(data1.type() == typeid(std::vector<std::string>)) {
+  if (type == kEqual || type == kNot_Equal) {
+    if (data1.type() == typeid(std::vector<std::string>)) {
       std::vector<Arg> arglist;
       arglist.push_back(Arg(data1));
-      if(data2.type() == typeid(sjtu::int2048)) {
-        try{
+      if (data2.type() == typeid(sjtu::int2048)) {
+        try {
           data1 = functions_["int"](arglist);
         } catch(const char *err) {
           return false;
         }
       }
-      if(data2.type() == typeid(bool)) {
+      if (data2.type() == typeid(bool)) {
         //std::cerr << 1 << std::endl;
         data1 = functions_["bool"](arglist);
       }
@@ -294,9 +294,9 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     case kGreater_Equal:
       return (*num1) >= (*num2);
     case kEqual:
-      return (*num1) == (*num2);
+      return fabs((*num1) - (*num2)) < 1e-10;
     case kNot_Equal:
-      return (*num1) != (*num2);
+      return fabs((*num1) - (*num2)) > 1e-10;
     default:
       throw "this operation is invalid\n";
     }
@@ -332,22 +332,21 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     default:
       throw "this operation is invalid\n";
     }
-    return false;
   }
   if (data1.type() == typeid(std::vector<std::string>) &&
       data2.type() == typeid(sjtu::int2048)) {
-    auto string = std::any_cast<std::vector<std::string>>(&data1);
+    auto string = std::any_cast<std::vector<std::string>>(data1);
     auto num = std::any_cast<sjtu::int2048>(data2);
-    std::vector<std::string> data(*string);
+    std::vector<std::string> data(string);
     //std::cerr << num << std::endl;
     std::string str1;
-    for(auto str : *string) {
+    for(auto str : string) {
       str1 += str;
     }
-    *string = std::vector<std::string>(1, str1);
+    string = std::vector<std::string>(1, str1);
     for (; num != 1; num = num - 1) {
       // std::cerr << data.size() << std::endl;
-      data.insert(data.end(), string->begin(), string->end());
+      data.insert(data.end(), string.begin(), string.end());
     }
     return data;
   }
@@ -505,7 +504,7 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {//on
         if(it->count(*name)) {
           //std::cerr << *name << std::endl;
           (*it)[*name] = Operation((*it)[*name], testlist[0], op);
-          break;
+          return (*it)[*name];
         }
       }
     }
@@ -608,8 +607,6 @@ std::any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx) {
         break;
       }
     }
-    //std::cerr << *flag << std::endl;
-    
     auto ret = visit(ctx->suite());
     if(auto control = std::any_cast<Control>(&ret)) {
       if(control->type_ == kContinue) {
@@ -1035,7 +1032,7 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
         for (auto test : *testlist) {
           std::vector<Arg> arglist;
           arglist.push_back(Arg(test));
-          test = functions_["string"](arglist);
+          test = functions_["str"](arglist);
           auto str_vector1 = std::any_cast<std::vector<std::string>>(test);
           for (auto data : str_vector1) {
             //std::cerr << j << " " << data << std::endl;
@@ -1068,7 +1065,7 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
       for (auto test : *testlist) {
         std::vector<Arg> arglist;
         arglist.push_back(Arg(test));
-        test = functions_["string"](arglist);
+        test = functions_["str"](arglist);
         auto str_vector1 = std::any_cast<std::vector<std::string>>(test);
         for (auto data : str_vector1) {
           //std::cerr << j << " " << data << std::endl;
