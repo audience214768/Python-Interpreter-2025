@@ -1,3 +1,10 @@
-print(float(True), float("123.456"))
+def builtin_test():
+    a = 3.1415926
+    b = True
+    c = "abc"
+    s1 = str(int(a)) + str(float(b))
+    s2 = f"pi={a}, bool={b}, s={c}"
+    s3 = f"{f"{True}"} == True"
+    print(s1, s2, s3)
 
-
+builtin_test()

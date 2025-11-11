@@ -9,7 +9,7 @@
 
 EvalVisitor::EvalVisitor() {
   auto print = [this](const std::vector<Arg> &arglist) {
-    //std::cerr << "print" << std::endl;
+    //std::cerr << arglist.size() << std::endl;
     for (int i = 0; i < arglist.size(); i++) {
       auto data = arglist[i].value_;
       data = GetValue(data);
@@ -18,6 +18,7 @@ EvalVisitor::EvalVisitor() {
         num->print();
       }
       if(auto num = std::any_cast<double>(&data)) {
+        //std::cerr << 1 << std::endl;
         printf("%.6lf", *num);
       }
       if (auto string_vector = std::any_cast<std::vector<std::string>>(&data)) {
@@ -135,6 +136,7 @@ EvalVisitor::EvalVisitor() {
       str.push_back(num->ToString());
     }
     if(auto num = std::any_cast<double>(&data)) {
+      //std::cerr << *num << std::endl;
       str.push_back(std::to_string(*num));
     }
     if(auto flag = std::any_cast<bool>(&data)) {
@@ -172,6 +174,9 @@ EvalVisitor::EvalVisitor() {
       } else {
         flag = 1;
       }
+    }
+    if(auto none = std::any_cast<NoneType>(&data)) {
+      flag = false;
     }
     return std::any(flag);
   };
@@ -335,16 +340,17 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
   }
   if (data1.type() == typeid(std::vector<std::string>) &&
       data2.type() == typeid(sjtu::int2048)) {
+        //std::cerr << 1 << std::endl;
     auto string = std::any_cast<std::vector<std::string>>(data1);
     auto num = std::any_cast<sjtu::int2048>(data2);
-    std::vector<std::string> data(string);
+    std::vector<std::string> data;
     //std::cerr << num << std::endl;
     std::string str1;
     for(auto str : string) {
       str1 += str;
     }
     string = std::vector<std::string>(1, str1);
-    for (; num != 1; num = num - 1) {
+    for (; num > 0; num = num - 1) {
       // std::cerr << data.size() << std::endl;
       data.insert(data.end(), string.begin(), string.end());
     }
@@ -645,6 +651,9 @@ std::any EvalVisitor::visitTest(Python3Parser::TestContext *ctx) {
 std::any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx) {
   auto test_vector = ctx->and_test();
   auto ret = visit(test_vector[0]);
+  /*if(auto arg = std::any_cast<std::vector<Arg>>(&ret)) {
+    std::cerr << "arg" << std::endl;
+  }*/
   // auto num = std::any_cast<sjtu::int2048>(&ret);
   // num->print();
   if (test_vector.size() == 1) {
@@ -922,9 +931,7 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
               }
             }
             /*if(auto value = std::any_cast<std::vector<std::any>>(&ret)) {
-              if(auto num = std::any_cast<sjtu::int2048>(&((*value)[0]))) {
-                std::cerr << *num << std::endl;
-              }
+              std::cerr << 1 << std::endl;
             }*/
           }
         }
@@ -1007,7 +1014,7 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
   auto brace_vector = ctx->OPEN_BRACE();
   std::vector<std::string> str;
   int i, j;
-  //std::cerr << std::endl;
+  //std::cerr << test_vector.size() << std::endl;
   for (i = 0, j = 0; i < str_vector.size() && j < test_vector.size();) {
     if (str_vector[i]->getSymbol()->getTokenIndex() < brace_vector[j]->getSymbol()->getTokenIndex()) {
       auto data = str_vector[i]->toString();
@@ -1027,9 +1034,12 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
       i++;
     } else {
       auto ret = visit(test_vector[j]);
+      //std::cerr << "test" << std::endl;
       if (auto testlist = std::any_cast<std::vector<std::any>>(&ret)) {
+        //std::cerr << "test" << std::endl;
         //std::cerr << j << std::endl;
         for (auto test : *testlist) {
+          test = GetValue(test);
           std::vector<Arg> arglist;
           arglist.push_back(Arg(test));
           test = functions_["str"](arglist);
@@ -1063,6 +1073,7 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
     if (auto testlist = std::any_cast<std::vector<std::any>>(&ret)) {
       // std::cerr << j << std::endl;
       for (auto test : *testlist) {
+        test = GetValue(test);
         std::vector<Arg> arglist;
         arglist.push_back(Arg(test));
         test = functions_["str"](arglist);
