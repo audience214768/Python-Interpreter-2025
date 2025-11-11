@@ -189,8 +189,7 @@ EvalVisitor::EvalVisitor() {
 
 std::any EvalVisitor::GetValue(std::any &data) {
   if (auto name = std::any_cast<std::string>(&data)) {
-    for (auto it = variables_stack_.rbegin(); it != variables_stack_.rend();
-         it++) {
+    for (auto it = variables_stack_.rbegin(); it != variables_stack_.rend(); it++) {
       if (it->count(*name)) {
         return (*it)[*name];
       }
@@ -250,6 +249,8 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     data2 = functions_["int"](arglist);
   }
   if (auto num1 = std::any_cast<sjtu::int2048>(&data1), num2 = std::any_cast<sjtu::int2048>(&data2); num1 && num2) {
+
+    //std::cerr << 1 << std::endl;
     //std::cerr << *num1 << " " << *num2 << " " << type << std::endl;
     switch (type) {
     case kAdd:
@@ -279,6 +280,7 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     }
   }
   if(auto num1 = std::any_cast<double>(&data1), num2 = std::any_cast<double>(&data2); num1 && num2) {
+    //std::cerr << 2 << std::endl;
     switch (type) {
     case kAdd:
       return (*num1) + (*num2);
@@ -290,6 +292,8 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
       return (*num1) / (*num2);
     case kIDiv:
       return sjtu::int2048(floor((*num1) / (*num2)));
+    case kMod:
+      return ((*num1) - floor((*num1) / (*num2)) * (*num2));
     case kLess:
       return (*num1) < (*num2);
     case kGreater:
@@ -307,6 +311,7 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     }
   }
   if (auto string1 = std::any_cast<std::vector<std::string>>(&data1), string2 = std::any_cast<std::vector<std::string>>(&data2); string1 && string2) {
+    //std::cerr << 3 << std::endl;
     std::string str1;
     for(auto string : *string1) {
       str1 += string;
@@ -340,7 +345,7 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
   }
   if (data1.type() == typeid(std::vector<std::string>) &&
       data2.type() == typeid(sjtu::int2048)) {
-        //std::cerr << 1 << std::endl;
+      //std::cerr << 4 << std::endl;
     auto string = std::any_cast<std::vector<std::string>>(data1);
     auto num = std::any_cast<sjtu::int2048>(data2);
     std::vector<std::string> data;
@@ -356,7 +361,7 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     }
     return data;
   }
-  return std::any();
+  throw "unbelievable operation\n";
 }
 
 std::any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx) {
@@ -922,7 +927,7 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
         if(auto control = std::any_cast<Control>(&ret)) {
           if(control->type_ == kReturn) {
             if(control->value_.empty()) {
-              ret = std::any();
+              ret = std::any(NoneType());
             } else {
               if(control->value_.size() == 1) {
                 ret = control->value_[0];
@@ -978,7 +983,7 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
   }
   if (ctx->NAME()) {
     std::string name = ctx->NAME()->toString();
-    return ctx->NAME()->toString();
+    return name;
   }
   if (ctx->STRING(0)) {
     std::vector<std::string> data;
