@@ -524,11 +524,19 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {//on
     for (int i = testlist_vector.size() - 2; i >= 0; i--) {
       auto ret1 = visit(testlist_vector[i]);
       if (auto testlist1 = std::any_cast<std::vector<std::any>>(&ret1)) {
-        for(int i = 0; i < testlist1->size(); i++) {
+        for (int i = 0; i < testlist1->size(); i++) {
           if (auto name = std::any_cast<std::string>(&(*testlist1)[i])) {
-            //std::cerr << *name << std::endl;
-            variables_stack_.back()[*name] = testlist[i];
-            //std::cerr << *name << std::endl;
+            // std::cerr << *name << std::endl;
+            bool find = 0;
+            if(variables_stack_.back().count(*name) != 0) {
+              variables_stack_.back()[*name] = testlist[i];
+            } else {
+              if(variables_stack_.front().count(*name) != 0) {
+                variables_stack_.front()[*name] = testlist[i];
+              } else {
+                variables_stack_.back()[*name] = testlist[i];
+              }
+            }
           }
         }
       }
@@ -646,7 +654,7 @@ std::any EvalVisitor::visitSuite(Python3Parser::SuiteContext *ctx) {
       return *control;
     }
   }
-  return std::any();
+  return std::any(NoneType());
 }
 
 std::any EvalVisitor::visitTest(Python3Parser::TestContext *ctx) {
