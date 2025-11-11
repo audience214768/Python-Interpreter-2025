@@ -189,10 +189,11 @@ EvalVisitor::EvalVisitor() {
 
 std::any EvalVisitor::GetValue(std::any &data) {
   if (auto name = std::any_cast<std::string>(&data)) {
-    for (auto it = variables_stack_.rbegin(); it != variables_stack_.rend(); it++) {
-      if (it->count(*name)) {
-        return (*it)[*name];
-      }
+    if(variables_stack_.back().count(*name)) {
+      return variables_stack_.back()[*name];
+    }
+    if(variables_stack_.front().count(*name)) {
+      return variables_stack_.front()[*name];
     }
   }
   return data;
@@ -511,11 +512,13 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {//on
     auto ret_op = visit(ctx->augassign());
     auto op = std::any_cast<OperationType>(ret_op);
     if(auto name = std::any_cast<std::string>(&testlist1[0])) {
-      for(auto it = variables_stack_.rbegin(); it != variables_stack_.rend(); it++) {
-        if(it->count(*name)) {
-          //std::cerr << *name << std::endl;
-          (*it)[*name] = Operation((*it)[*name], testlist[0], op);
-          return (*it)[*name];
+      if(variables_stack_.back().count(*name)) {
+        variables_stack_.back()[*name] = Operation(variables_stack_.back()[*name], testlist[0], op);
+      } else {
+        if(variables_stack_.front().count(*name)) {
+          variables_stack_.front()[*name] = Operation(variables_stack_.front()[*name], testlist[0], op);
+        } else {
+          throw "can't find the variable\n";
         }
       }
     }
