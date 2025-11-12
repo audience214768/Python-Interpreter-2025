@@ -76,6 +76,9 @@ int2048::int2048(long long num) {
     normalize();
 }
 int2048::int2048(const std::string &num) {
+    if(num == "" || num == "-") {
+      throw "this is not a number";
+    }
     if(!num.empty() && num[0] == '-') {
         sign_ = -1;
     } else {
@@ -130,6 +133,9 @@ bool int2048::ToBool() const{
 
 void int2048::read(const std::string &num) {
     //std::cerr << "begin" << std::endl;
+    if(num == "" || num == "-") {
+      throw "this is not a number";
+    }
     if(!num.empty() && num[0] == '-') {
         sign_ = -1;
     } else {

@@ -90,6 +90,9 @@ EvalVisitor::EvalVisitor() {
       if(string_num[0] == '-') {
         sign = -1;
       }
+      if(string_num == "" || string_num == "-") {
+        throw "this is not a number";
+      }
       int index = string_num.find('.');
       if(index == std::string::npos) {
           index = string_num.length();
