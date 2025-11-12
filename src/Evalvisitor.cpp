@@ -919,13 +919,8 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
         auto ret2 = visit(ctx->trailer());
         if (auto arglist = std::any_cast<std::vector<Arg>>(&ret2)) {
           //std::cerr << *name << "have arg" << std::endl;
-          try {
-            auto ret = functions_[*name](*arglist);
-            return ret;
-          } catch(const char *err) {
-            std::cerr << err << std::endl;
-            return std::any();
-          }
+          auto ret = functions_[*name](*arglist);
+          return ret;
         }
       }
       if (user_functions_.count(*name)) {
@@ -1002,14 +997,8 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
       //std::cerr << num << std::endl;
       return num;
     } else {
-      try {
-        sjtu::int2048 num(ctx->NUMBER()->toString());
-        return num;
-      } catch(const char *err) {
-        std::cerr << err << std::endl;
-        return std::any(sjtu::int2048(0));
-      }
-      
+      sjtu::int2048 num(ctx->NUMBER()->toString());
+      return num;
     }
   }
   if (ctx->NAME()) {
