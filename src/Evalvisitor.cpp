@@ -730,7 +730,7 @@ std::any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx) {
     arglist.push_back(Arg(ret));
     ret = functions_["bool"](arglist);
     auto flag = std::any_cast<bool>(&ret);
-    for (int i = 1; i < test_vector.size() && flag != 0; i++) {
+    for (int i = 1; i < test_vector.size() && (*flag) != 0; i++) {
       auto ret1 = visit(test_vector[i]);
       ret1 = GetValue(ret1);
       std::vector<Arg> arglist;

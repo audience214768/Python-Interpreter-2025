@@ -1,4 +1,107 @@
-print(1 == "1.0")
-print(2 == "1.0")
-print(1.2 == "1.0")
-print(1.0 == "1.0")
+# dynamic_typing_and_operations.py
+# A comprehensive test for dynamic type conversions and operations.
+# This script is designed to validate the 'Two-way Conversion Probing' strategy.
+
+print("--- 1. Homogeneous Type Operations (Sanity Check) ---")
+# Integer operations
+print(100 + 200)         # Expected: 300
+print(100 * 2)           # Expected: 200
+print(100 // 30)         # Expected: 3
+# Float operations
+print(10.5 + 2.0)        # Expected: 12.500000
+print(10.5 * 2.0)        # Expected: 21.000000
+print(10.5 / 2.0)        # Expected: 5.250000
+# String operations
+print("hello" + " " + "world") # Expected: hello world
+print("a" * 5)                 # Expected: aaaaa
+# Bool operations
+print(True and False)    # Expected: False
+print(True or False)     # Expected: True
+
+
+print("\n--- 2. Numeric Promotion (The 'Numeric Continent') ---")
+# Bool with Int
+print(True + 1)          # Expected: 2 (True -> 1)
+print(False * 5)         # Expected: 0 (False -> 0)
+print(1 == True)         # Expected: True
+# Int with Float
+print(1 + 2.5)           # Expected: 3.500000 (1 -> 1.0)
+print(10 // 3.0)         # Expected: 3.000000 (or 3, depends on spec)
+print(5.0 == 5)          # Expected: True
+# Bool with Float
+print(True + 1.5)        # Expected: 2.500000 (True -> 1 -> 1.0)
+print(0.0 == False)      # Expected: True
+
+
+print("\n--- 3. String vs. Numeric Comparisons (==, !=) - CORE TEST ---")
+# Test Case from our discussion: int vs float-string
+print(f"1 == '1.0' -> {1 == '1.0'}")     # Expected: True (int->float, then str->float)
+
+# Simple conversions
+print(f"123 == '123' -> {123 == '123'}") # Expected: True (str->int)
+print(f"1.5 == '1.5' -> {1.5 == '1.5'}") # Expected: True (str->float)
+print(f"True == '1' -> {True == '1'}")   # Expected: True (str->int, then bool vs int)
+
+# Conversions that should fail, resulting in False
+print(f"1 == 'abc' -> {1 == 'abc'}")         # Expected: False (str->int fails)
+print(f"1.0 == 'xyz' -> {1.0 == 'xyz'}")     # Expected: False (str->float fails)
+print(f"1 == '1.2' -> {1 == '1.2'}")         # Expected: False (str->int fails, but promotion to float works!)
+                                            # Correct logic: 1 -> 1.0, then '1.2' -> 1.2. 1.0 != 1.2 -> False.
+print(f"2.0 == '2' -> {2.0 == '2'}")     # Expected: True (str->float)
+
+# Test with !=
+print(f"1 != 'abc' -> {1 != 'abc'}")     # Expected: True
+print(f"123 != '123' -> {123 != '123'}") # Expected: False
+
+# Test with zero
+print(f"0 == '0' -> {0 == '0'}")         # Expected: True
+print(f"0 == '0.0' -> {0 == '0.0'}")     # Expected: True
+print(f"-1 == '-1' -> {-1 == '-1'}")     # Expected: True
+print(f"-1.5 == '-1.5' -> {-1.5 == '-1.5'}") # Expected: True
+
+# This is a tricky one. str -> bool is special.
+# bool("False") is True. Then True == False -> False.
+print(f"False == 'False' -> {False == 'False'}") # Expected: False
+
+
+print("\n--- 4. String Concatenation and Repetition ---")
+# String with Int
+print("value: " + str(10)) # str() must work. Assumes it's implemented. Expected: value: 10
+print(str(1.5) * 3)        # Expected: 1.5000001.5000001.500000 (if str(1.5) is formatted)
+
+# Your spec: str * int. int * str is not defined. Let's test this.
+# If your code swaps them, this should work.
+print(3 * "a")             # Expected: aaa
+
+
+print("\n--- 5. Logical Operators and Short-Circuiting ---")
+# Note: Python's `and`/`or` return one of the operands, not necessarily a bool.
+# Your spec is ambiguous here. If your `and`/`or` always return a bool, the
+# output will be different but the logic can still be correct.
+# This test assumes the standard Python behavior.
+
+print(f"'a' and 'b' -> {'a' and 'b'}") # Expected: b
+print(f"'' or 'b' -> {'' or 'b'}")   # Expected: b
+print(f"1 and 0 -> {1 and 0}")       # Expected: 0
+print(f"1 or 0 -> {1 or 0}")         # Expected: 1
+
+# Short-circuiting test with side effects
+g_side_effect = 0
+def side_effect_func():
+    g_side_effect = g_side_effect + 1
+    return True
+
+print("\n--- Testing Short-Circuiting ---")
+# `False and ...` should not execute the function
+result = False and side_effect_func()
+print(f"g_side_effect after 'False and ...': {g_side_effect}") # Expected: 0
+
+# `True or ...` should not execute the function
+result = True or side_effect_func()
+print(f"g_side_effect after 'True or ...': {g_side_effect}") # Expected: 0
+
+# `True and ...` SHOULD execute the function
+result = True and side_effect_func()
+print(f"g_side_effect after 'True and ...': {g_side_effect}") # Expected: 1
+
+print("\n--- All dynamic tests complete. ---")
