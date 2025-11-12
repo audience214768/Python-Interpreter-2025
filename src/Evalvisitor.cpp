@@ -261,7 +261,12 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     case kMulti:
       return (*num1) * (*num2);
     case kIDiv:
-      return (*num1) / (*num2);
+      try {
+        return (*num1) / (*num2);
+      } catch(const char *err) {
+        std::cerr << err << std::endl;
+        return std::any(sjtu::int2048(0));
+      }
     case kMod:
       return (*num1) % (*num2);
     case kLess:
@@ -290,8 +295,16 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     case kMulti:
       return (*num1) * (*num2);
     case kDiv:
+      if(fabs(*num2) < 1e-10) {
+        std::cerr << "divide a zero" << std::endl;
+        return std::any(0);
+      }
       return (*num1) / (*num2);
     case kIDiv:
+      if(fabs(*num2) < 1e-10) {
+        std::cerr << "divide a zero" << std::endl;
+        return std::any(0);
+      }
       return sjtu::int2048(floor((*num1) / (*num2)));
     case kMod:
       return ((*num1) - floor((*num1) / (*num2)) * (*num2));
@@ -911,7 +924,13 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
         auto ret2 = visit(ctx->trailer());
         if (auto arglist = std::any_cast<std::vector<Arg>>(&ret2)) {
           //std::cerr << *name << "have arg" << std::endl;
-          return functions_[*name](*arglist);
+          try {
+            auto ret = functions_[*name](*arglist);
+            return functions_[*name](*arglist);
+          } catch(const char *err) {
+            std::cerr << err << std::endl;
+            return std::any();
+          }
         }
       }
       if (user_functions_.count(*name)) {
@@ -988,8 +1007,14 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
       //std::cerr << num << std::endl;
       return num;
     } else {
-      sjtu::int2048 num(ctx->NUMBER()->toString());
-      return num;
+      try {
+        sjtu::int2048 num(ctx->NUMBER()->toString());
+        return num;
+      } catch(const char *err) {
+        std::cerr << err << std::endl;
+        return std::any(sjtu::int2048(0));
+      }
+      
     }
   }
   if (ctx->NAME()) {
