@@ -207,6 +207,31 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     arglist[0] = Arg(data2);
     data2 = functions_["float"](arglist);
   }
+  if (data1.type() != typeid(std::vector<std::string>) && data2.type() == typeid(std::vector<std::string>)) {
+    //std::cerr << 1 << std::endl;
+    std::swap(data1, data2);
+  }
+  if (type == kEqual || type == kNot_Equal) {
+    if (data1.type() == typeid(std::vector<std::string>)) {
+      std::vector<Arg> arglist;
+      arglist.push_back(Arg(data1));
+      if (data2.type() == typeid(sjtu::int2048) || data2.type() == typeid(double)) {
+        try {
+          data1 = functions_["int"](arglist);
+        } catch(const char *err) {
+          try{
+            data1 = functions_["float"](arglist);
+          } catch(const char *err) {
+            return false;
+          }
+        }
+      }
+      if (data2.type() == typeid(bool)) {
+        //std::cerr << 1 << std::endl;
+        data1 = functions_["bool"](arglist);
+      }
+    }
+  }
   if (data2.type() == typeid(double)) {
     std::vector<Arg> arglist;
     arglist.push_back(Arg(data1));
@@ -216,27 +241,6 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     std::vector<Arg> arglist;
     arglist.push_back(Arg(data2));
     data2 = functions_["float"](arglist);
-  }
-  if (data1.type() != typeid(std::vector<std::string>) && data2.type() == typeid(std::vector<std::string>)) {
-    //std::cerr << 1 << std::endl;
-    std::swap(data1, data2);
-  }
-  if (type == kEqual || type == kNot_Equal) {
-    if (data1.type() == typeid(std::vector<std::string>)) {
-      std::vector<Arg> arglist;
-      arglist.push_back(Arg(data1));
-      if (data2.type() == typeid(sjtu::int2048)) {
-        try {
-          data1 = functions_["int"](arglist);
-        } catch(const char *err) {
-          return false;
-        }
-      }
-      if (data2.type() == typeid(bool)) {
-        //std::cerr << 1 << std::endl;
-        data1 = functions_["bool"](arglist);
-      }
-    }
   }
   if(data1.type() == typeid(bool)) {
     std::vector<Arg> arglist;
@@ -251,7 +255,6 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
   }
   if (auto num1 = std::any_cast<sjtu::int2048>(&data1), num2 = std::any_cast<sjtu::int2048>(&data2); num1 && num2) {
 
-    //std::cerr << 1 << std::endl;
     //std::cerr << *num1 << " " << *num2 << " " << type << std::endl;
     switch (type) {
     case kAdd:
@@ -397,6 +400,7 @@ std::any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx) {
     }
   } catch (const char *err) {
     std::cerr << err << std::endl;
+    exit(1);
   }
   return std::any();
 }
@@ -534,19 +538,11 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {//on
     auto op = std::any_cast<OperationType>(ret_op);
     if(auto name = std::any_cast<std::string>(&testlist1[0])) {
       if(variables_stack_.back().count(*name)) {
-        try {
-          variables_stack_.back()[*name] = Operation(variables_stack_.back()[*name], testlist[0], op);
-        } catch(const char *err) {
-          std::cerr << err << std::endl;
-        }
+        variables_stack_.back()[*name] = Operation(variables_stack_.back()[*name], testlist[0], op);
         
       } else {
         if(variables_stack_.front().count(*name)) {
-          try {
-            variables_stack_.front()[*name] = Operation(variables_stack_.front()[*name], testlist[0], op);
-          } catch(const char *err) {
-            std::cerr << err << std::endl;
-          }
+          variables_stack_.front()[*name] = Operation(variables_stack_.front()[*name], testlist[0], op);
         } else {
           throw "can't find the variable\n";
         }
