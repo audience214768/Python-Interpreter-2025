@@ -268,7 +268,12 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
         return std::any(sjtu::int2048(0));
       }
     case kMod:
-      return (*num1) % (*num2);
+      try {
+        return (*num1) % (*num2);
+      } catch(const char *err) {
+        std::cerr << err << std::endl;
+        return std::any(sjtu::int2048(0));
+      }
     case kLess:
       return (*num1) < (*num2);
     case kGreater:
@@ -307,6 +312,10 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
       }
       return sjtu::int2048(floor((*num1) / (*num2)));
     case kMod:
+      if(fabs(*num2) < 1e-10) {
+        std::cerr << "divide a zero" << std::endl;
+        return std::any(0);
+      }
       return ((*num1) - floor((*num1) / (*num2)) * (*num2));
     case kLess:
       return (*num1) < (*num2);
