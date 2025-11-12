@@ -119,7 +119,12 @@ std::string int2048::ToString() const{
     num += "-";
   }
   for(int i = data_.size() - 1; i >= 0; i--) {
-    num += std::to_string(data_[i]);
+    if(data_[i] == 0 && i != data_.size() - 1) {
+      num += "000000000";
+    } else {
+      num += std::to_string(data_[i]);
+    }
+    
   }
   return num;
 }
