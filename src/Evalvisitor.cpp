@@ -397,7 +397,6 @@ std::any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx) {
     }
   } catch (const char *err) {
     std::cerr << err << std::endl;
-    exit(1);
   }
   return std::any();
 }
@@ -535,10 +534,19 @@ std::any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) {//on
     auto op = std::any_cast<OperationType>(ret_op);
     if(auto name = std::any_cast<std::string>(&testlist1[0])) {
       if(variables_stack_.back().count(*name)) {
-        variables_stack_.back()[*name] = Operation(variables_stack_.back()[*name], testlist[0], op);
+        try {
+          variables_stack_.back()[*name] = Operation(variables_stack_.back()[*name], testlist[0], op);
+        } catch(const char *err) {
+          std::cerr << err << std::endl;
+        }
+        
       } else {
         if(variables_stack_.front().count(*name)) {
-          variables_stack_.front()[*name] = Operation(variables_stack_.front()[*name], testlist[0], op);
+          try {
+            variables_stack_.front()[*name] = Operation(variables_stack_.front()[*name], testlist[0], op);
+          } catch(const char *err) {
+            std::cerr << err << std::endl;
+          }
         } else {
           throw "can't find the variable\n";
         }
@@ -935,7 +943,7 @@ std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
           //std::cerr << *name << "have arg" << std::endl;
           try {
             auto ret = functions_[*name](*arglist);
-            return functions_[*name](*arglist);
+            return ret;
           } catch(const char *err) {
             std::cerr << err << std::endl;
             return std::any();
