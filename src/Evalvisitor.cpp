@@ -160,11 +160,7 @@ EvalVisitor::EvalVisitor() {
       flag = num->ToBool();
     }
     if(auto num = std::any_cast<double>(&data)) {
-      if(fabs(*num) < 1e-10) {
-        flag = 0;
-      } else {
-        flag = 1;
-      }
+      flag = *num;
     }
     if(auto str = std::any_cast<std::vector<std::string>>(&data)) {
       std::string str_total;
@@ -234,6 +230,13 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
         data1 = functions_["bool"](arglist);
       }
     }
+    if(data1.type() == typeid(NoneType) || data2.type() == typeid(NoneType)) {
+      if(data1.type() == typeid(NoneType) && data2.type() == typeid(NoneType)) {
+        return type == kEqual;
+      } else {
+        return type == kNot_Equal;
+      }
+    }
   }
   if (data2.type() == typeid(double)) {
     std::vector<Arg> arglist;
@@ -257,7 +260,6 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     data2 = functions_["int"](arglist);
   }
   if (auto num1 = std::any_cast<sjtu::int2048>(&data1), num2 = std::any_cast<sjtu::int2048>(&data2); num1 && num2) {
-
     //std::cerr << *num1 << " " << *num2 << " " << type << std::endl;
     switch (type) {
     case kAdd:
@@ -479,7 +481,7 @@ std::any EvalVisitor::visitFlow_stmt(Python3Parser::Flow_stmtContext *ctx) {
     if(auto testlist = std::any_cast<std::vector<std::any>>(&ret)) {
       for(auto test : *testlist) {
         auto value = GetValue(test);
-        control.value_.push_back(GetValue(test));
+        control.value_.push_back(value);
         /*if(auto num = std::any_cast<sjtu::int2048>(&value)) {
           std::cerr << *num << std::endl;
         }*/
@@ -902,7 +904,7 @@ std::any EvalVisitor::visitFactor(Python3Parser::FactorContext *ctx) {
   if (ctx->atom_expr()) {
     return visit(ctx->atom_expr());
   } 
-  throw "factor wrong\n";
+  throw "factor wrong";
 }
 
 std::any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx) {
