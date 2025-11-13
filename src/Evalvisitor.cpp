@@ -313,9 +313,9 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
       return (*num1) >= (*num2);
     case kEqual:
       //std::cerr << fabs((*num1) - (*num2)) << std::endl;
-      return fabs((*num1) - (*num2)) < 1e-10;
+      return (*num1) == (*num2);
     case kNot_Equal:
-      return fabs((*num1) - (*num2)) > 1e-10;
+      return (*num1) != (*num2);
     default:
       throw "this operation is invalid\n";
     }
