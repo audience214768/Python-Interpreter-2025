@@ -413,7 +413,7 @@ std::any EvalVisitor::visitTypedargslist(Python3Parser::TypedargslistContext *ct
       argument.name_ = *name;
     }
     auto ret1 = visit(test_vector[i]);
-    argument.default_ = ret1;
+    argument.default_ = GetValue(ret1);
     arglist.push_back(argument);
   }
   return arglist;
