@@ -211,25 +211,9 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     std::swap(data1, data2);
   }
   if (type == kEqual || type == kNot_Equal) {
-    if (data1.type() == typeid(std::vector<std::string>)) {
-      std::vector<Arg> arglist;
-      arglist.push_back(Arg(data1));
-      if (data2.type() == typeid(sjtu::int2048) || data2.type() == typeid(double)) {
-        try {
-          data1 = functions_["int"](arglist);
-        } catch(const char *err) {
-          try{
-            data1 = functions_["float"](arglist);
-          } catch(const char *err) {
-            return false;
-          }
-        }
-      }
-      if (data2.type() == typeid(bool)) {
-        //std::cerr << 1 << std::endl;
-        data1 = functions_["bool"](arglist);
-      }
-    }
+    if (data1.type() == typeid(std::vector<std::string>) && data2.type() != typeid(std::vector<std::string>)) {
+      return false;
+    }  
     if(data1.type() == typeid(NoneType) || data2.type() == typeid(NoneType)) {
       if(data1.type() == typeid(NoneType) && data2.type() == typeid(NoneType)) {
         return type == kEqual;
