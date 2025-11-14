@@ -1,1 +1,8 @@
-print(f"{{{{ {"this"} }}}}")
+def fun1():
+    return 1, 2
+def fun2():
+    return 3, 4
+def fun3():
+    return fun1(), fun2()
+
+print(fun3())

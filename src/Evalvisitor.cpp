@@ -10,9 +10,20 @@
 EvalVisitor::EvalVisitor() {
   auto print = [this](const std::vector<Arg> &arglist) {
     //std::cerr << arglist.size() << std::endl;
-    for (int i = 0; i < arglist.size(); i++) {
-      auto data = arglist[i].value_;
-      data = GetValue(data);
+    std::vector<std::any> unzip_arglist;
+    for(auto arg : arglist) {
+      if(auto vec = std::any_cast<std::vector<std::any>>(&arg.value_)) {
+        for(auto arg1 : *vec) {
+          unzip_arglist.push_back(arg1);
+        }
+      } else {
+        auto data = GetValue(arg.value_);
+        unzip_arglist.push_back(data);
+      }
+    }
+    //std::cerr << unzip_arglist.size() << std::endl;
+    for (int i = 0; i < unzip_arglist.size(); i++) {
+      auto data = unzip_arglist[i];
       if (auto num = std::any_cast<sjtu::int2048>(&data)) {
         //std::cerr << 1 << std::endl;
         num->print();
@@ -33,7 +44,7 @@ EvalVisitor::EvalVisitor() {
       if (auto none = std::any_cast<NoneType>(&data)) {
         printf("%s", "None");
       }
-      if (i != arglist.size() - 1) {
+      if (i != unzip_arglist.size() - 1) {
         printf(" ");
       }
     }
