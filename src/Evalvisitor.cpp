@@ -296,7 +296,6 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     case kGreater_Equal:
       return (*num1) >= (*num2);
     case kEqual:
-      //std::cerr << fabs((*num1) - (*num2)) << std::endl;
       return (*num1) == (*num2);
     case kNot_Equal:
       return (*num1) != (*num2);
@@ -392,7 +391,6 @@ std::any EvalVisitor::visitParameters(Python3Parser::ParametersContext *ctx) {
   }
   return std::any(std::vector<DefineArg>());
 }
-
 std::any EvalVisitor::visitTypedargslist(Python3Parser::TypedargslistContext *ctx) {
   auto tfp_vector = ctx->tfpdef();
   auto test_vector = ctx->test();
@@ -1033,12 +1031,12 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
       while (pos != std::string::npos) {
         //std::cerr << pos << std::endl;
         data.replace(pos, 2, "{");
-        pos = data.find("{{");
+        pos = data.find("{{", pos + 1);
       }
       pos = data.find("}}");
       while (pos != std::string::npos) {
         data.replace(pos, 2, "}");
-        pos = data.find("}}");
+        pos = data.find("}}", pos + 1);
       }
       str.push_back(data);
       //std::cerr << i << " " << str_vector[i]->toString() << std::endl;
@@ -1070,12 +1068,12 @@ std::any EvalVisitor::visitFormat_string(Python3Parser::Format_stringContext *ct
     while (pos != std::string::npos) {
       //std::cerr << pos << std::endl;
       data.replace(pos, 2, "{");
-      pos = data.find("{{");
+      pos = data.find("{{", pos + 1);
     }
     pos = data.find("}}");
     while (pos != std::string::npos) {
       data.replace(pos, 2, "}");
-      pos = data.find("}}");
+      pos = data.find("}}", pos + 1);
     }
     str.push_back(data);
   }
