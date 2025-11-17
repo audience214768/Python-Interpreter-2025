@@ -224,7 +224,7 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
   if (type == kEqual || type == kNot_Equal) {
     if (data1.type() == typeid(std::vector<std::string>) && data2.type() != typeid(std::vector<std::string>)) {
       return false;
-    }  
+    }
     if(data1.type() == typeid(NoneType) || data2.type() == typeid(NoneType)) {
       if(data1.type() == typeid(NoneType) && data2.type() == typeid(NoneType)) {
         return type == kEqual;
@@ -295,7 +295,7 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
     case kDiv:
       return (*num1) / (*num2);
     case kIDiv:
-      return sjtu::int2048(floor((*num1) / (*num2)));
+      return floor((*num1) / (*num2));
     case kMod:
       return ((*num1) - floor((*num1) / (*num2)) * (*num2));
     case kLess:
