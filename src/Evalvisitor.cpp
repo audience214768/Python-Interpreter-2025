@@ -223,7 +223,7 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
   }
   if (type == kEqual || type == kNot_Equal) {
     if (data1.type() == typeid(std::vector<std::string>) && data2.type() != typeid(std::vector<std::string>)) {
-      return false;
+      return type == kEqual;
     }
     if(data1.type() == typeid(NoneType) || data2.type() == typeid(NoneType)) {
       if(data1.type() == typeid(NoneType) && data2.type() == typeid(NoneType)) {
