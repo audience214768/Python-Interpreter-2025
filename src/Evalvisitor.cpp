@@ -960,16 +960,7 @@ std::any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx) {
   if (ctx->NUMBER()) {
     auto string_num = ctx->NUMBER()->toString();
     if(int index = string_num.find('.'); index != std::string::npos) {
-      double num = 0;
-      for(int i = index - 1, base = 1; i >= 0; i--, base *= 10) {
-        num += base * (string_num[i] - '0');
-      }
-      double base = 0.1;
-      for(int i = index + 1; i < string_num.length(); base /= 10, i++) {
-        num += base * (string_num[i] - '0');
-      }
-      //std::cerr << num << std::endl;
-      return num;
+      return std::stod(ctx->NUMBER()->toString());
     } else {
       sjtu::int2048 num(ctx->NUMBER()->toString());
       return num;
