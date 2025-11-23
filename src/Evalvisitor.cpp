@@ -97,34 +97,13 @@ EvalVisitor::EvalVisitor() {
       for(std::string s : *str) {
         string_num += s;
       }
-      int sign = 1;
-      if(string_num[0] == '-') {
-        sign = -1;
-      }
-      if(string_num == "" || string_num == "-") {
+      try {
+        double_num = std::stod(string_num);
+      } catch (const std::invalid_argument& ia) {
         throw "this is not a number";
+      } catch (const std::out_of_range& oor) {
+        throw "number out of range"; 
       }
-      int index = string_num.find('.');
-      if(index == std::string::npos) {
-          index = string_num.length();
-      }
-      //std::cerr << index << std::endl;
-      for(int i = (sign == 1 ? 0 : 1);i < index; i++) {
-        if (string_num[i] >= '0' && string_num[i] <= '9') {
-          double_num = double_num * 10 + (string_num[i] - '0');
-        } else {
-          throw "this is not a number";
-        }
-      }
-      double base = 0.1;
-      for(int i = index + 1; i < string_num.length(); base /= 10, i++) {
-        if(string_num[i] >= '0' && string_num[i] <= '9') {
-          double_num += base * (string_num[i] - '0');
-        } else {
-          throw "this is not a number";
-        }
-      }
-      double_num *= sign;
       //std::cerr << double_num << std::endl;
     }
     if(auto flag = std::any_cast<bool>(&data)) {
@@ -223,7 +202,7 @@ std::any EvalVisitor::Operation(std::any data1, std::any data2, OperationType ty
   }
   if (type == kEqual || type == kNot_Equal) {
     if (data1.type() == typeid(std::vector<std::string>) && data2.type() != typeid(std::vector<std::string>)) {
-      return type != kEqual;
+      return false;
     }
     if(data1.type() == typeid(NoneType) || data2.type() == typeid(NoneType)) {
       if(data1.type() == typeid(NoneType) && data2.type() == typeid(NoneType)) {

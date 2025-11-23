@@ -1,1 +1,1 @@
-print(1 != "1")
+print(float("+3.9"), int(-3.9))
